@@ -347,7 +347,12 @@ export function defaultStubs(): Stub[] {
             filename: 'quizi-study-reminder.ics',
             ics: 'BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n',
         }),
-        ok('PATCH', `${AUTH}/v1/user-settings`, profile.settings),
+        ok('PATCH', `${AUTH}/v1/user-settings`, profile),
+        ok('PATCH', `${AUTH}/v1/user-profiles/settings/theme`, profile),
+        ok('GET', `${AUTH}/v1/features`, {
+            plan: 'FREE',
+            features: { 'garden.game': { enabled: true, source: 'plan' } },
+        }),
         // api service
         ok('GET', `${API}/v1/ping`, 'pong'),
         ok('GET', `${API}/v1/shelves`, page([shelf])),

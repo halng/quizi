@@ -218,9 +218,9 @@ export const ApiService = {
         }
     },
     // Auth
-    sendOtp: (email: string) =>
+    sendOtp: (email: string, signup = false, username = '') =>
         fetchJson<null>(
-            `/v1/otp?email=${email}`,
+            `/v1/otp?email=${encodeURIComponent(email)}${signup ? '&signup=true' : ''}${username ? `&username=${encodeURIComponent(username)}` : ''}`,
             { method: 'POST' },
             authClient,
             // The login form shows this error inline.
@@ -288,6 +288,14 @@ export const ApiService = {
             authClient
         ),
 
+    /** Remembers the chosen visual theme on the account, for every device. */
+    saveTheme: (theme: string) =>
+        fetchJson<UserProfile>(
+            '/v1/user-profiles/settings/theme',
+            { method: 'PATCH', body: JSON.stringify({ theme }) },
+            authClient
+        ),
+
     /** A short-lived form for posting a profile picture straight to S3. */
     requestAvatarUpload: (contentType: string) =>
         fetchJson<AvatarUploadTicket>(
@@ -331,7 +339,7 @@ export const ApiService = {
         ),
 
     updateSettings: (settings: Partial<UserSettings>) =>
-        fetchJson<UserSettings>(
+        fetchJson<UserProfile>(
             '/v1/user-settings',
             {
                 method: 'PATCH',
@@ -941,6 +949,13 @@ export const ApiService = {
         ),
 
     // Stats & Leaderboard
+    // Feature flags; public, a signed-in caller also gets values for their plan.
+    getFeatures: () =>
+        fetchJson<{
+            features: Record<string, { enabled: boolean; source: string }>;
+            plan: string | null;
+        }>('/v1/features', undefined, authClient),
+
     getStats: () => fetchJson<StatsData>('/v1/users/me/stats'),
 
     getLeaderboard: () => fetchJson<LeaderboardUser[]>('/leaderboard'),

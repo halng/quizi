@@ -27,7 +27,9 @@ import com.app.quizi.api.card.CardRepository;
 import com.app.quizi.api.shared.application.vm.ApiRes;
 import com.app.quizi.api.shared.application.vm.PagingRes;
 import com.app.quizi.api.shared.exception.NotFoundException;
+import com.app.quizi.api.shared.exception.PlanLimitException;
 import com.app.quizi.api.shared.exception.RetryLaterException;
+import com.app.quizi.api.shared.plan.PlanLimitService;
 import com.app.quizi.api.shared.security.CurrentUser;
 import com.app.quizi.api.shelf.Shelf;
 import com.app.quizi.api.shelf.ShelfCount;
@@ -68,6 +70,8 @@ class ShelfServiceImplTest {
 
     @Mock private CurrentUser currentUser;
 
+    @Mock private PlanLimitService planLimits;
+
     @InjectMocks private ShelfServiceImpl shelveService;
 
     private ShelfReq shelfReq;
@@ -102,7 +106,17 @@ class ShelfServiceImplTest {
         ApiRes result = shelveService.create(shelfReq);
 
         assertNotNull(result);
+        verify(planLimits).requireDeckSlot();
         verify(shelfRepository, times(1)).save(any(Shelf.class));
+    }
+
+    @Test
+    void create_doesNotSaveWhenDeckLimitIsReached() {
+        when(currentUser.id()).thenReturn(currentUserId);
+        doThrow(new PlanLimitException("Deck limit reached")).when(planLimits).requireDeckSlot();
+
+        assertThrows(PlanLimitException.class, () -> shelveService.create(shelfReq));
+        verify(shelfRepository, never()).save(any(Shelf.class));
     }
 
     @Test
